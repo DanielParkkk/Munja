@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>옛한글 번역기 — Minimal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f8f6f3;
+  --white:#ffffff;
+  --surface:#f2ede6;
+  --border:#e4ddd3;
+  --border2:#cfc7ba;
+  --teal:#2a7a6e;
+  --teal2:#38a090;
+  --teal-pale:#edf6f5;
+  --teal-light:#c8e8e4;
+  --warm:#c06030;
+  --text:#18120c;
+  --text2:#4a3c2e;
+  --text3:#8a7a68;
+  --text4:#c4b8a8;
+  --radius:16px;
+  --shadow:0 1px 3px rgba(30,20,10,0.06),0 4px 16px rgba(30,20,10,0.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;}
+
+/* NAV */
+nav{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:0 1px 6px rgba(30,20,10,0.05);}
+.brand{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.brand-dot{width:32px;height:32px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:15px;}
+.brand-tx{display:flex;flex-direction:column;line-height:1;}
+.brand-kr{font-size:14px;font-weight:700;color:var(--text);}
+.brand-en{font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+.nav-r{display:flex;gap:8px;align-items:center;}
+.btn-pill{padding:7px 16px;border-radius:20px;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;}
+.btn-pill.ghost{background:transparent;border:1px solid var(--border2);color:var(--text3);}
+.btn-pill.ghost:hover{border-color:var(--teal);color:var(--teal);}
+.btn-pill.solid{background:var(--teal);color:#fff;border:none;box-shadow:0 2px 8px rgba(42,122,110,0.25);}
+.btn-pill.solid:hover{background:var(--teal2);transform:translateY(-1px);}
+
+/* HERO */
+.hero{text-align:center;padding:52px 20px 36px;animation:fadeUp 0.6s ease both;}
+.hero-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;background:var(--teal-pale);border:1px solid var(--teal-light);font-size:11px;color:var(--teal);font-weight:600;letter-spacing:0.5px;margin-bottom:18px;}
+.hero-h{font-family:'DM Serif Display',serif;font-size:clamp(28px,5vw,52px);color:var(--text);line-height:1.2;letter-spacing:-1px;margin-bottom:6px;}
+.hero-h em{color:var(--teal);font-style:italic;}
+.hero-p{font-size:14px;color:var(--text3);font-weight:300;margin-top:8px;}
+
+/* MAIN */
+.main{max-width:920px;margin:0 auto;padding:0 20px 56px;animation:fadeUp 0.6s 0.1s ease both;}
+
+/* SEGMENTED CONTROL (tab) */
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:14px;}
+.seg-btn{padding:8px 22px;border-radius:7px;border:none;background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
+.seg-btn.active{background:var(--white);color:var(--text);box-shadow:0 1px 4px rgba(30,20,10,0.1);font-weight:600;}
+
+/* CARD */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+
+/* TEXT MODE */
+#tm{display:none;}#tm.on{display:block;}
+
+.lang-strip{display:grid;grid-template-columns:1fr 44px 1fr;background:var(--surface);border-bottom:1px solid var(--border);}
+.lc{padding:10px 16px;display:flex;align-items:center;gap:7px;}
+.lc:last-child{border-left:1px solid var(--border);}
+.lf{font-size:14px;}
+.ls{background:transparent;border:none;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:600;cursor:pointer;outline:none;appearance:none;padding-right:14px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a7a68'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 0 center;}
+.sc{display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);border-right:1px solid var(--border);}
+.sb{width:28px;height:28px;border-radius:50%;background:transparent;border:1px solid var(--border2);color:var(--text3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all 0.25s;}
+.sb:hover{background:var(--teal-pale);border-color:var(--teal);color:var(--teal);transform:rotate(180deg);}
+
+.grid2{display:grid;grid-template-columns:1fr 1px 1fr;}
+.div1{background:var(--border);}
+.pnl{display:flex;flex-direction:column;}
+textarea.inp{flex:1;min-height:220px;padding:20px;border:none;outline:none;resize:none;background:transparent;font-family:'Noto Serif KR',serif;font-size:16px;line-height:1.95;color:var(--text);}
+textarea.inp::placeholder{color:var(--text4);font-family:'Noto Sans KR',sans-serif;}
+.pf{padding:10px 14px;border-top:1px solid var(--border);background:var(--surface);display:flex;justify-content:space-between;align-items:center;}
+.cc{font-size:11px;color:var(--text4);}
+.btn-go{padding:9px 22px;border-radius:22px;background:var(--teal);color:#fff;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:600;transition:all 0.2s;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(42,122,110,0.2);}
+.btn-go:hover:not(:disabled){background:var(--teal2);transform:translateY(-1px);box-shadow:0 4px 14px rgba(42,122,110,0.3);}
+.btn-go:disabled{background:var(--border2);color:var(--text4);cursor:not-allowed;box-shadow:none;}
+.k{font-size:10px;opacity:0.65;background:rgba(255,255,255,0.2);padding:2px 4px;border-radius:3px;}
+
+.ob{flex:1;padding:20px;min-height:220px;position:relative;}
+.oe{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text4);font-size:14px;text-align:center;padding:20px;}
+.ot{font-family:'Noto Serif KR',serif;font-size:16px;line-height:1.95;color:var(--text);white-space:pre-wrap;display:none;animation:fadeIn 0.4s ease;}
+.of{padding:8px 14px;border-top:1px solid var(--border);background:var(--surface);display:flex;justify-content:flex-end;gap:6px;}
+.ic{width:30px;height:30px;border-radius:8px;background:transparent;border:1px solid var(--border2);color:var(--text3);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.ic:hover{background:var(--teal-pale);border-color:var(--teal-light);color:var(--teal);}
+
+/* IMAGE MODE */
+#im{display:none;}#im.on{display:block;}
+
+.ig{display:grid;grid-template-columns:1fr 1fr;min-height:340px;}
+.dz{border-right:1px solid var(--border);display:flex;flex-direction:column;cursor:pointer;position:relative;overflow:hidden;transition:background 0.2s;}
+.dz>input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;}
+.dz.hi>input[type=file]{pointer-events:none;}
+.dz:hover:not(.hi){background:var(--teal-pale);}
+.dz.drag{background:var(--teal-pale);}
+.din{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 28px;pointer-events:none;}
+.dc{width:88px;height:88px;border-radius:50%;border:1.5px dashed var(--border2);display:flex;align-items:center;justify-content:center;font-size:30px;transition:all 0.25s;background:var(--surface);}
+.dz:hover:not(.hi) .dc,.dz.drag .dc{border-color:var(--teal);background:var(--teal-pale);transform:scale(1.05);}
+.dt{font-size:15px;font-weight:600;color:var(--text2);text-align:center;line-height:1.5;}
+.ds{font-size:12px;color:var(--text3);text-align:center;line-height:1.9;font-weight:300;}
+.fts{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;}
+.ft{padding:3px 9px;border-radius:6px;background:var(--surface);border:1px solid var(--border);font-size:10px;color:var(--text3);font-family:monospace;}
+
+.pvw{display:none;flex:1;flex-direction:column;position:relative;}
+.pvw.on{display:flex;}
+.pvw img{width:100%;height:100%;object-fit:contain;padding:16px;max-height:300px;}
+.pvbar{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);padding:36px 14px 12px;display:flex;gap:7px;opacity:0;transition:opacity 0.2s;}
+.dz.hi:hover .pvbar{opacity:1;}
+.pvb{padding:6px 12px;border-radius:12px;font-size:11px;font-family:'Noto Sans KR',sans-serif;font-weight:500;cursor:pointer;border:none;}
+.pvb.r{background:#fff;color:var(--text);}
+.pvb.x{background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);}
+
+.op{display:flex;flex-direction:column;}
+.ob2{flex:1;padding:18px;position:relative;min-height:260px;overflow-y:auto;}
+.oe2{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
+.oe2-ic{font-size:28px;opacity:0.2;}
+.oe2-t{font-size:12px;color:var(--text4);text-align:center;line-height:1.9;}
+.ota{width:100%;height:100%;min-height:220px;border:none;outline:none;resize:none;background:transparent;font-family:'Noto Serif KR',serif;font-size:14px;line-height:2.1;color:var(--text);display:none;}
+.ota.on{display:block;animation:fadeIn 0.4s ease;}
+
+.ia{border-top:1px solid var(--border);padding:12px 16px;background:var(--surface);display:flex;justify-content:space-between;align-items:center;grid-column:1/-1;}
+.ss{padding:6px 24px 6px 11px;border:1px solid var(--border2);border-radius:8px;background:var(--white);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;outline:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a7a68'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 7px center;}
+.btn-ocr{padding:8px 16px;border-radius:20px;background:var(--white);border:1px solid var(--border2);color:var(--text2);font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:5px;}
+.btn-ocr:hover:not(:disabled){border-color:var(--teal);color:var(--teal);background:var(--teal-pale);}
+.btn-ocr:disabled{opacity:0.4;cursor:not-allowed;}
+
+.trout{display:none;border-top:1px solid var(--border);}
+.trout.on{display:block;animation:fadeIn 0.3s ease;}
+.trout-hd{padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.trout-lbl{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;}
+.trout-b{padding:20px 22px;}
+.trtxt{font-family:'Noto Serif KR',serif;font-size:16px;line-height:2;color:var(--text);white-space:pre-wrap;display:none;animation:fadeIn 0.4s ease;}
+
+/* LOADING */
+.lw{display:flex;flex-direction:column;gap:11px;}
+.pr{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:5px;}
+.pt{height:2px;background:var(--border);border-radius:2px;overflow:hidden;}
+.pf2{height:100%;background:var(--teal);border-radius:2px;transition:width 0.4s ease;}
+.sw{display:flex;flex-direction:column;gap:9px;margin-top:3px;}
+.sk{height:14px;border-radius:3px;background:linear-gradient(90deg,var(--surface) 25%,var(--border) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* FEATURES */
+.feats{max-width:920px;margin:0 auto;padding:0 20px 60px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;animation:fadeUp 0.6s 0.2s ease both;}
+.fc{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;transition:all 0.22s;}
+.fc:hover{transform:translateY(-3px);box-shadow:var(--shadow);}
+.fci{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:12px;}
+.fci.teal{background:var(--teal-pale);border:1px solid var(--teal-light);}
+.fci.warm{background:#fdf0e8;border:1px solid #f0d0b8;}
+.fci.blue{background:#eef3fd;border:1px solid #c8d8f8;}
+.fct{font-size:14px;font-weight:700;margin-bottom:4px;}
+.fcd{font-size:12px;color:var(--text3);line-height:1.7;font-weight:300;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--teal);color:#fff;padding:10px 22px;border-radius:20px;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;z-index:999;transition:transform 0.3s ease;box-shadow:0 4px 20px rgba(42,122,110,0.35);pointer-events:none;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.modal-bg.on{opacity:1;pointer-events:auto;}
+.modal{background:var(--white);border-radius:18px;padding:36px 32px;width:360px;position:relative;box-shadow:0 24px 80px rgba(30,20,10,0.2);transform:translateY(14px) scale(0.97);transition:transform 0.25s;}
+.modal-bg.on .modal{transform:translateY(0) scale(1);}
+.modal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;border:none;background:var(--surface);cursor:pointer;font-size:13px;color:var(--text3);display:flex;align-items:center;justify-content:center;transition:all 0.18s;}
+.modal-close:hover{background:var(--border);color:var(--text);}
+.modal-title{font-family:'DM Serif Display',serif;font-size:24px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--text3);margin-bottom:24px;line-height:1.6;font-weight:300;}
+.modal-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px;display:block;}
+.modal-input{width:100%;padding:11px 14px;border:1px solid var(--border2);border-radius:9px;font-family:'Noto Sans KR',sans-serif;font-size:14px;color:var(--text);background:var(--bg);outline:none;transition:border-color 0.2s;margin-bottom:12px;}
+.modal-input:focus{border-color:var(--teal);}
+.btn-modal-submit{width:100%;padding:12px;border-radius:22px;background:var(--teal);color:#fff;border:none;font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+.btn-modal-submit:hover{background:var(--teal2);}
+.modal-divider{display:flex;align-items:center;gap:10px;margin:16px 0;}
+.modal-divider-line{flex:1;height:1px;background:var(--border);}
+.modal-divider-txt{font-size:11px;color:var(--text4);}
+.btn-demo-c{width:100%;padding:11px;border-radius:22px;background:transparent;border:1.5px solid var(--border2);color:var(--text2);font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;}
+.btn-demo-c:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-pale);}
+.modal-switch{text-align:center;margin-top:14px;font-size:12px;color:var(--text3);}
+.modal-switch a{color:var(--teal);cursor:pointer;font-weight:600;}
+
+/* nav user */
+.nav-user{display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:20px;background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:all 0.18s;}
+.nav-user:hover{border-color:var(--border2);}
+.nav-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal2));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.nav-uname{font-size:13px;font-weight:600;color:var(--text);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+@media(max-width:680px){
+  .grid2{grid-template-columns:1fr}.div1{display:none}
+  .ig{grid-template-columns:1fr}.dz{border-right:none;border-bottom:1px solid var(--border)}
+  .feats{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="brand" href="#">
+    <div class="brand-dot">📖</div>
+    <div class="brand-tx">
+      <span class="brand-kr">옛한글 번역기</span>
+      <span class="brand-en">Old Korean Translator</span>
+    </div>
+  </a>
+  <div class="nav-r" id="navR">
+    <button class="btn-pill ghost" onclick="openModal('login')">히스토리</button>
+    <button class="btn-pill solid" onclick="openModal('login')">로그인</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-chip">✦ 훈민정음 시대의 언어를 만나다</div>
+  <h1 class="hero-h">옛한글과 현대어를<br><em>자유롭게</em> 오가다</h1>
+  <p class="hero-p">고문서 이미지를 업로드하면 OCR 판독 후 현대어로 번역합니다.</p>
+</div>
+
+<div class="main">
+  <div class="card">
+
+    <!-- IMAGE MODE -->
+    <div id="im" class="on">
+      <div class="ig">
+        <div class="dz" id="dz" ondragover="dov(event)" ondragleave="dlv()" ondrop="ddr(event)">
+          <input type="file" accept="image/*" id="fi" onchange="ofc(event)">
+          <div class="din" id="din">
+            <div class="dc">📜</div>
+            <div class="dt">고문서 이미지를<br>드래그하거나 클릭</div>
+            <div class="ds">고서·언해본·탁본·필사본 지원</div>
+            <div class="fts"><span class="ft">PNG</span><span class="ft">JPG</span><span class="ft">TIFF</span><span class="ft">WEBP</span></div>
+          </div>
+          <div class="pvw" id="pvw">
+            <img id="pi" src="" alt="">
+            <div class="pvbar">
+              <button class="pvb r" onclick="document.getElementById('ri').click()">🔄 교체</button>
+              <button class="pvb x" onclick="rmi()">✕</button>
+            </div>
+          </div>
+          <input type="file" accept="image/*" id="ri" style="display:none" onchange="ofc(event)">
+        </div>
+        <div class="op">
+          <div class="ob2">
+            <div class="oe2" id="oe2"><div class="oe2-ic">📄</div><div class="oe2-t">이미지 업로드 후<br>OCR 판독을 실행하세요</div></div>
+            <div id="oload" style="display:none;" class="lw">
+              <div><div class="pr"><span id="oolbl">이미지 분석 중…</span><span id="oopct">0%</span></div><div class="pt"><div class="pf2" id="oofill" style="width:0%"></div></div></div>
+              <div class="sw"><div class="sk" style="width:90%"></div><div class="sk" style="width:76%"></div><div class="sk" style="width:83%"></div><div class="sk" style="width:64%"></div><div class="sk" style="width:87%"></div></div>
+            </div>
+            <textarea class="ota" id="ota" placeholder="판독된 원문 (직접 수정 가능)" oninput="oce()"></textarea>
+          </div>
+          <div class="of">
+            <button class="ic" id="ocpb" style="display:none" onclick="cpy('ota',true)" title="복사">📋</button>
+          </div>
+        </div>
+      </div>
+      <div class="ia">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <span style="font-size:12px;color:var(--text3);font-weight:500;">스타일</span>
+          <select class="ss"><option>자연스러운 번역</option><option>직역 중심</option><option>학술 번역</option></select>
+          <span style="font-size:11px;color:var(--text4);" id="fn"></span>
+        </div>
+        <div style="display:flex;gap:7px;">
+          <button class="btn-ocr" id="ob" onclick="doOcr()" disabled>📖 OCR 판독</button>
+          <button class="btn-go" id="itb" onclick="doITr()" disabled>번역하기 <span class="k">→</span></button>
+        </div>
+      </div>
+      <div class="trout" id="trout">
+        <div class="trout-hd"><span class="trout-lbl">현대어 번역</span><div style="display:flex;gap:6px;"><button class="ic" onclick="cpy('itxt')" title="복사">📋</button></div></div>
+        <div class="trout-b">
+          <div id="itl" style="display:none;" class="lw">
+            <div><div class="pr"><span id="itlbl">번역 중…</span><span id="itpct">0%</span></div><div class="pt"><div class="pf2" id="itfill" style="width:0%"></div></div></div>
+            <div class="sw"><div class="sk" style="width:88%"></div><div class="sk" style="width:73%"></div><div class="sk" style="width:82%"></div></div>
+          </div>
+          <div class="trtxt" id="itxt"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="feats">
+  <div class="fc"><div class="fci teal">📜</div><div class="fct">훈민정음</div><div class="fcd">1443년 세종대왕이 창제한 문자 체계를 기반으로 번역합니다.</div></div>
+  <div class="fc"><div class="fci warm">🌏</div><div class="fct">다국어 지원</div><div class="fcd">영어, 중국어, 일본어 등 10개 언어에서 옛한글로 번역합니다.</div></div>
+  <div class="fc"><div class="fci blue">🔖</div><div class="fct">번역 히스토리</div><div class="fcd">로그인 후 번역 기록을 저장하고 언제든 다시 확인하세요.</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const MOCK_OCR=`지효로 홀시 집이 가난ᄒᆞ야 ᄂᆞ믈으 음식을 먹으며\n어버이를위 ᄒᆞ야 빅니 밧긔 뵐을져 오더니\n이죽은후의 남으로초나 희놀시조촌술위일\n빅이오 만죠곡식을빠 ᄒᆞ며 자리를겹으로 안즈`;
+const MOCK_TR={yh:`나랏말ᄊᆞ미 듕귁에 달아\n문ᄍᆞ와로 서르 ᄉᆞᄆᆞᆺ디 아니ᄒᆞᆯᄊᆞ\n이런 젼ᄎᆞ로 어린 百姓이\n니르고져 ᄒᆞᆯ배 이셔도`,ko:`효성으로 집이 가난하여 나물로 음식을 먹으며,\n어버이를 위하여 베를 짜니 밖에 나가 뵐 수가 없었더니,\n어버이가 돌아가신 후에도 일용할 것을 부족하지 않게 하며,\n자리를 겹으로 깔고 앉아.`,en:`Though the house was poor in filial devotion, eating only greens,\nWeaving cloth for the parents' sake, unable to visit outside,\nAfter the parents passed, preparing daily provisions like others,\nSitting upon doubled mats.`,ja:`孝心ゆえに家は貧しく、野菜だけで食を凌ぎ、\n親のために布を織り、外に出られなかった。\n親が逝かれた後も日用の備えをし、重ね敷きの席に座した。`,zh:`以孝为本，家境贫寒，以野菜为食，\n为父母织布，无暇外出拜见。\n父母辞世后备好日用草蔬，席地而坐。`};
+const FLAGS={ko:'🇰🇷',en:'🇺🇸',ja:'🇯🇵',zh:'🇨🇳',yh:'📜'};
+const OCRS=[[20,'이미지 전처리 중…'],[48,'옛한글 자모 인식 중…'],[75,'문자 배열 분석 중…'],[94,'원문 정리 중…'],[100,'완료']];
+const TRS=[[25,'의미 파악 중…'],[58,'번역문 생성 중…'],[90,'다듬는 중…'],[100,'완료']];
+
+function sw(m){
+  document.getElementById('stb').classList.toggle('active',m==='text');
+  document.getElementById('sib').classList.toggle('active',m==='image');
+  document.getElementById('tm').classList.toggle('on',m==='text');
+  document.getElementById('im').classList.toggle('on',m==='image');
+}
+function uf(){
+  document.getElementById('sf').textContent=FLAGS[document.getElementById('sl').value]||'🌐';
+  document.getElementById('tf').textContent=FLAGS[document.getElementById('tl').value]||'🌐';
+}
+function swapl(){
+  const s=document.getElementById('sl'),t=document.getElementById('tl');
+  const sv=s.value,tv=t.value;
+  [...s.options].forEach(o=>{if(o.value===tv)o.selected=true;});
+  [...t.options].forEach(o=>{if(o.value===sv)o.selected=true;});
+  uf();
+}
+function oi(){const v=document.getElementById('src').value;document.getElementById('cn').textContent=v.length;document.getElementById('gb').disabled=!v.trim();}
+function ok(e){if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();doT();}}
+function doT(){
+  const v=document.getElementById('src').value.trim();if(!v)return;
+  const lang=document.getElementById('tl').value;
+  document.getElementById('oe').style.display='none';document.getElementById('otxt').style.display='none';
+  document.getElementById('ol').style.display='block';document.getElementById('cpb').style.display='none';document.getElementById('gb').disabled=true;
+  rp('ofill','olbl','opct',TRS,()=>{
+    document.getElementById('ol').style.display='none';
+    document.getElementById('otxt').textContent=MOCK_TR[lang]||MOCK_TR.ko;document.getElementById('otxt').style.display='block';
+    document.getElementById('cpb').style.display='flex';document.getElementById('gb').disabled=false;
+  });
+}
+function dov(e){e.preventDefault();document.getElementById('dz').classList.add('drag');}
+function dlv(){document.getElementById('dz').classList.remove('drag');}
+function ddr(e){e.preventDefault();dlv();const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))lf(f);}
+function ofc(e){const f=e.target.files[0];if(f)lf(f);e.target.value='';}
+let currentFile = null; // 업로드된 파일 보관
+
+function lf(f){
+  currentFile = f; // 파일 저장
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=document.getElementById('pi');img.src=ev.target.result;
+    img.onload=()=>{
+      document.getElementById('din').style.display='none';document.getElementById('pvw').classList.add('on');
+      document.getElementById('dz').classList.add('hi');document.getElementById('fi').style.pointerEvents='none';
+      document.getElementById('fn').textContent=f.name;document.getElementById('ob').disabled=false;resetO();
+    };
+  };r.readAsDataURL(f);
+}
+function rmi(){
+  currentFile = null;
+  document.getElementById('pi').src='';document.getElementById('din').style.display='flex';document.getElementById('pvw').classList.remove('on');
+  document.getElementById('dz').classList.remove('hi');document.getElementById('fi').style.pointerEvents='auto';
+  document.getElementById('fn').textContent='';document.getElementById('ob').disabled=true;resetO();
+}
+function resetO(){
+  document.getElementById('ota').value='';document.getElementById('ota').classList.remove('on');
+  document.getElementById('oe2').style.display='flex';document.getElementById('oload').style.display='none';
+  document.getElementById('ocpb').style.display='none';document.getElementById('itb').disabled=true;
+  document.getElementById('trout').classList.remove('on');
+}
+function oce(){document.getElementById('itb').disabled=!document.getElementById('ota').value.trim();}
+
+async function doOcr(){
+  if(!currentFile){ showT('이미지를 먼저 업로드해주세요'); return; }
+
+  // UI — 로딩 시작
+  document.getElementById('oe2').style.display='none';
+  document.getElementById('oload').style.display='block';
+  document.getElementById('ota').classList.remove('on');
+  document.getElementById('ob').disabled=true;
+
+  // 프로그레스바 애니메이션 (서버 응답 대기 중 표시용)
+  let progTimer = animateProg('oofill','oolbl','oopct');
+
+  try {
+    // Flask 서버로 이미지 전송
+    const formData = new FormData();
+    formData.append('image', currentFile);
+
+    const res = await fetch('http://localhost:5000/ocr', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await res.json();
+    clearInterval(progTimer);
+
+    if (!res.ok || data.error) {
+      throw new Error(data.error || '서버 오류');
+    }
+
+    // UI — 결과 표시
+    document.getElementById('oload').style.display='none';
+    document.getElementById('ota').value = data.text;
+    document.getElementById('ota').classList.add('on');
+    document.getElementById('ocpb').style.display='flex';
+    document.getElementById('itb').disabled = false;
+    document.getElementById('ob').disabled = false;
+
+    // 프로그레스 100%
+    const fill = document.getElementById('oofill');
+    const lbl = document.getElementById('oolbl');
+    const pct = document.getElementById('oopct');
+    if(fill) fill.style.width='100%';
+    if(lbl) lbl.textContent='판독 완료';
+    if(pct) pct.textContent='100%';
+
+  } catch(err) {
+    clearInterval(progTimer);
+    document.getElementById('oload').style.display='none';
+    document.getElementById('oe2').style.display='flex';
+    document.getElementById('ob').disabled=false;
+    showT('❌ 오류: ' + err.message);
+    console.error(err);
+  }
+}
+
+// 서버 대기 중 프로그레스바를 천천히 채워주는 애니메이션
+function animateProg(fi, li, pi){
+  let p = 0;
+  const labels = ['이미지 전송 중…','옛한글 자모 인식 중…','문자 배열 분석 중…','원문 정리 중…'];
+  let li_idx = 0;
+  const fill = document.getElementById(fi);
+  const lbl  = document.getElementById(li);
+  const pct  = document.getElementById(pi);
+  return setInterval(()=>{
+    if(p < 90) {
+      p += Math.random() * 4;
+      if(p > 90) p = 90;
+      if(fill) fill.style.width = p + '%';
+      if(pct)  pct.textContent  = Math.floor(p) + '%';
+      const idx = Math.floor(p / 25);
+      if(idx !== li_idx && idx < labels.length){
+        li_idx = idx;
+        if(lbl) lbl.textContent = labels[idx];
+      }
+    }
+  }, 300);
+}
+function doITr(){
+  if(!document.getElementById('ota').value.trim())return;
+  const lang=document.getElementById('tl').value;
+  document.getElementById('trout').classList.add('on');document.getElementById('itl').style.display='block';document.getElementById('itxt').style.display='none';
+  document.getElementById('itb').disabled=true;
+  rp('itfill','itlbl','itpct',TRS,()=>{
+    document.getElementById('itl').style.display='none';document.getElementById('itxt').textContent=MOCK_TR[lang]||MOCK_TR.ko;
+    document.getElementById('itxt').style.display='block';document.getElementById('itb').disabled=false;
+  });
+}
+function rp(fi,li,pi,steps,done){
+  let i=0;const next=()=>{if(i>=steps.length){done();return;}const[p,l]=steps[i++];
+    const f=document.getElementById(fi);const lb=document.getElementById(li);const pc=document.getElementById(pi);
+    if(f)f.style.width=p+'%';if(lb)lb.textContent=l;if(pc)pc.textContent=p+'%';
+    setTimeout(next,i<steps.length?270+Math.random()*300:170);};next();
+}
+function cpy(id,isTA){
+  const txt=isTA?document.getElementById(id).value:document.getElementById(id).textContent;
+  navigator.clipboard.writeText(txt).then(()=>showT('복사 완료 ✓'));
+}
+function showT(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+
+/* ── Login ── */
+let loggedIn=false;
+function openModal(v){
+  if(loggedIn){
+    switchV('logout');
+    const n=document.getElementById('navUnameEl');
+    document.getElementById('logoutSub').textContent=(n?n.textContent:'사용자')+'님으로 로그인 중입니다.';
+  } else { switchV(v||'login'); }
+  document.getElementById('modalBg').classList.add('on');
+}
+function closeModal(){document.getElementById('modalBg').classList.remove('on');}
+function closeBg(e){if(e.target===document.getElementById('modalBg'))closeModal();}
+function switchV(v){
+  document.getElementById('vLogin').style.display=v==='login'?'block':'none';
+  document.getElementById('vSignup').style.display=v==='signup'?'block':'none';
+  document.getElementById('vLogout').style.display=v==='logout'?'block':'none';
+}
+function doLogin(){
+  const email=document.getElementById('lEmail').value.trim();
+  const pw=document.getElementById('lPw').value;
+  if(!email){showT('이메일을 입력해주세요');return;}
+  if(!pw){showT('비밀번호를 입력해주세요');return;}
+  setIn(email.split('@')[0]);closeModal();showT(email.split('@')[0]+'님, 환영합니다! 👋');
+}
+function doSignup(){
+  const name=document.getElementById('sName').value.trim();
+  const email=document.getElementById('sEmail').value.trim();
+  const pw=document.getElementById('sPw').value;
+  if(!name){showT('이름을 입력해주세요');return;}
+  if(!email){showT('이메일을 입력해주세요');return;}
+  if(pw.length<8){showT('비밀번호는 8자 이상이어야 합니다');return;}
+  setIn(name);closeModal();showT(name+'님, 가입을 환영합니다! 🎉');
+}
+function demoC(){setIn('데모 사용자');closeModal();showT('데모 계정으로 로그인되었습니다 🎭');}
+function doLogout(){
+  loggedIn=false;
+  document.getElementById('navR').innerHTML=`<button class="btn-pill ghost" onclick="openModal('login')">히스토리</button><button class="btn-pill solid" onclick="openModal('login')">로그인</button>`;
+  closeModal();showT('로그아웃되었습니다');
+}
+function setIn(name){
+  loggedIn=true;
+  document.getElementById('navR').innerHTML=`<div class="nav-user" onclick="openModal('logout')"><div class="nav-avatar">${name.charAt(0).toUpperCase()}</div><span class="nav-uname" id="navUnameEl">${name}</span></div>`;
+}
+</script>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg" onclick="closeBg(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="vLogin">
+      <div class="modal-title">다시 만나요 👋</div>
+      <div class="modal-sub">로그인하여 번역 히스토리를<br>저장하고 언제든 다시 확인하세요.</div>
+      <label class="modal-label">이메일</label>
+      <input class="modal-input" type="email" id="lEmail" placeholder="example@email.com">
+      <label class="modal-label">비밀번호</label>
+      <input class="modal-input" type="password" id="lPw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="btn-modal-submit" onclick="doLogin()">로그인</button>
+      <div class="modal-divider"><div class="modal-divider-line"></div><span class="modal-divider-txt">또는</span><div class="modal-divider-line"></div></div>
+      <button class="btn-demo-c" onclick="demoC()">🎭 데모 계정으로 체험하기</button>
+      <div class="modal-switch">계정이 없으신가요? <a onclick="switchV('signup')">회원가입</a></div>
+    </div>
+    <div id="vSignup" style="display:none;">
+      <div class="modal-title">처음 오셨나요 ✨</div>
+      <div class="modal-sub">무료로 가입하고 옛한글 번역을<br>마음껏 사용해보세요.</div>
+      <label class="modal-label">이름</label>
+      <input class="modal-input" type="text" id="sName" placeholder="홍길동">
+      <label class="modal-label">이메일</label>
+      <input class="modal-input" type="email" id="sEmail" placeholder="example@email.com">
+      <label class="modal-label">비밀번호</label>
+      <input class="modal-input" type="password" id="sPw" placeholder="8자 이상" onkeydown="if(event.key==='Enter')doSignup()">
+      <button class="btn-modal-submit" onclick="doSignup()">회원가입</button>
+      <div class="modal-switch">이미 계정이 있으신가요? <a onclick="switchV('login')">로그인</a></div>
+    </div>
+    <div id="vLogout" style="display:none;">
+      <div class="modal-title">내 계정</div>
+      <div class="modal-sub" id="logoutSub"></div>
+      <button class="btn-modal-submit" style="background:var(--text2)" onclick="doLogout()">로그아웃</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+</body>
+</html>
