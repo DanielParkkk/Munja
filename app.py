@@ -4,17 +4,45 @@ from dotenv import load_dotenv
 import os
 import tempfile
 import traceback
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from datetime import datetime
 
 load_dotenv()
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
 
+# ── DB 연결 ──────────────────────────────
+def get_db():
+    return psycopg2.connect(os.environ.get('DATABASE_URL'), sslmode='require')
+
+def init_db():
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS translations (
+                id SERIAL PRIMARY KEY,
+                username TEXT NOT NULL DEFAULT '익명',
+                ocr_text TEXT NOT NULL,
+                translated_text TEXT NOT NULL,
+                lang TEXT NOT NULL DEFAULT 'ko',
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        ''')
+        conn.commit()
+        cur.close()
+        conn.close()
+        print("✅ DB 테이블 준비 완료!")
+    except Exception as e:
+        print(f"⚠️ DB 초기화 오류: {e}")
+
 # ── 모델 자동 다운로드 ──────────────────────────────
 def download_model(file_id, dest_path):
     if os.path.exists(dest_path):
         size = os.path.getsize(dest_path)
-        if size > 10 * 1024 * 1024:  # 10MB 이상이면 정상 파일
+        if size > 10 * 1024 * 1024:
             print(f"✅ 모델 이미 존재: {dest_path} ({size//1024//1024}MB)")
             return
         else:
@@ -27,11 +55,12 @@ def download_model(file_id, dest_path):
     size = os.path.getsize(dest_path)
     print(f"✅ 다운로드 완료: {dest_path} ({size//1024//1024}MB)")
 
-# 서버 시작 시 모델 다운로드
+# 서버 시작 시 모델 다운로드 + DB 초기화
 print("🔄 모델 파일 확인 중...")
 download_model('1LhQ6AKWzhhG-w880Fs_G2HJagtXvQ-YK', 'weights_detector.pt')
 download_model('1XK8-NGDEHxvopSaxElXvdYI1CXtgZgN3', 'weights_classifier.pth')
 print("✅ 모델 준비 완료!")
+init_db()
 
 # ── OCR 엔드포인트 ──────────────────────────────
 @app.route('/ocr', methods=['POST'])
@@ -69,6 +98,7 @@ def translate():
     file = request.files['image']
     ocr_text = request.form.get('text', '').strip()
     target_lang = request.form.get('lang', 'ko')
+    username = request.form.get('username', '익명').strip() or '익명'
 
     if not ocr_text:
         return jsonify({'error': '번역할 텍스트가 없습니다.'}), 400
@@ -86,16 +116,30 @@ def translate():
             api_key=os.environ.get('OPENAI_API_KEY'),
         )
 
-        # 언어 선택에 따라 결과 반환
         lang_map = {
             'ko': result.get('modern_korean', ''),
             'en': result.get('english_translation', ''),
-            'ja': result.get('modern_korean', ''),  # ja/zh는 modern_korean 기반으로 추가 번역 가능
+            'ja': result.get('modern_korean', ''),
             'zh': result.get('modern_korean', ''),
         }
+        translated_text = lang_map.get(target_lang, result.get('modern_korean', ''))
+
+        # DB에 저장
+        try:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute(
+                'INSERT INTO translations (username, ocr_text, translated_text, lang) VALUES (%s, %s, %s, %s)',
+                (username, ocr_text[:500], translated_text[:1000], target_lang)
+            )
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as db_err:
+            print(f"⚠️ DB 저장 오류: {db_err}")
 
         return jsonify({
-            'text': lang_map.get(target_lang, result.get('modern_korean', '')),
+            'text': translated_text,
             'ancient_text_corrected': result.get('ancient_text_corrected', ocr_text),
             'modern_korean': result.get('modern_korean', ''),
             'english_translation': result.get('english_translation', ''),
@@ -110,6 +154,38 @@ def translate():
             os.remove(tmp_path)
 
 
+# ── 히스토리 조회 ──────────────────────────────
+@app.route('/history', methods=['GET'])
+def history():
+    try:
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute('''
+            SELECT id, username, ocr_text, translated_text, lang, created_at
+            FROM translations
+            ORDER BY created_at DESC
+            LIMIT 50
+        ''')
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        result = []
+        for row in rows:
+            result.append({
+                'id': row['id'],
+                'user': row['username'],
+                'ocr': row['ocr_text'],
+                'tr': row['translated_text'],
+                'lang': row['lang'],
+                'time': row['created_at'].strftime('%Y-%m-%d %H:%M'),
+            })
+        return jsonify(result)
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify([]), 500
+
+
 # ── 프론트엔드 서빙 ──────────────────────────────
 @app.route('/')
 def index():
@@ -122,3 +198,4 @@ if __name__ == '__main__':
     print("=" * 50)
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+

@@ -352,14 +352,19 @@ textarea.inp::placeholder{color:var(--text4);font-family:'Noto Sans KR',sans-ser
   <div class="hist-grid" id="histGrid"></div>
 </div>
 
-<div style="max-width:920px;margin:0 auto;padding:0 20px 16px;">
-  <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);">기능 소개</div>
-  <div style="font-size:12px;color:var(--text3);margin-top:3px;">옛한글 번역기가 제공하는 주요 기능을 소개합니다.</div>
-</div>
-<div class="feats">
-  <div class="fc"><div class="fci teal">📜</div><div class="fct">옛한글 OCR 판독</div><div class="fcd">고문서 이미지를 업로드하면 AI가 옛한글 글자를 자동으로 인식하고 텍스트로 추출해줍니다.</div></div>
-  <div class="fc"><div class="fci warm">🌏</div><div class="fct">다국어 번역</div><div class="fcd">추출된 옛한글을 현대 한국어, 영어, 일본어, 중국어로 자연스럽게 번역합니다.</div></div>
-  <div class="fc"><div class="fci blue">🔖</div><div class="fct">번역 히스토리</div><div class="fcd">나와 다른 사용자들의 번역 기록을 모아볼 수 있어요. 로그인 없이도 열람 가능합니다.</div></div>
+<div style="max-width:920px;margin:0 auto;padding:48px 20px 60px;display:grid;grid-template-columns:repeat(3,1fr);gap:32px;border-top:1px solid var(--border);">
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <span style="font-size:13px;font-weight:600;color:var(--text3);">📜 옛한글 OCR 판독</span>
+    <span style="font-size:12px;color:var(--text4);line-height:1.7;">고문서 이미지를 업로드하면 AI가 옛한글 글자를 자동으로 인식하고 텍스트로 추출해줍니다.</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <span style="font-size:13px;font-weight:600;color:var(--text3);">🌏 다국어 번역</span>
+    <span style="font-size:12px;color:var(--text4);line-height:1.7;">추출된 옛한글을 현대 한국어, 영어, 일본어, 중국어로 자연스럽게 번역합니다.</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <span style="font-size:13px;font-weight:600;color:var(--text3);">🔖 번역 히스토리</span>
+    <span style="font-size:12px;color:var(--text4);line-height:1.7;">나와 다른 사용자들의 번역 기록을 모아볼 수 있어요. 로그인 없이도 열람 가능합니다.</span>
+  </div>
 </div>
 
 <!-- 히스토리 모달 (nav 버튼 클릭 시) -->
@@ -516,6 +521,7 @@ async function doITr(){
     const formData=new FormData();
     formData.append('text', text);
     formData.append('lang', currentLang);
+    formData.append('username', loggedIn ? currentUser : '익명');
     if(currentFile) formData.append('image', currentFile);
 
     const res=await fetch('/translate',{method:'POST',body:formData});
@@ -542,58 +548,65 @@ function rp(fi,li,pi,steps,done){
     setTimeout(next,i<steps.length?270+Math.random()*300:170);};next();
 }
 
-/* ── 히스토리 저장 ── */
-function saveHist(){
+/* ── 히스토리 저장 (DB) ── */
+async function saveHist(){
   const ocr=document.getElementById('ota').value.trim();
   const tr=document.getElementById('itxt').textContent.trim();
   if(!ocr||!tr){showT('번역 결과가 없습니다');return;}
-  const imgSrc=document.getElementById('pi').src||null;
-  const name=loggedIn?currentUser:'익명';
-  const entry={
-    user:name, av:name.charAt(0).toUpperCase(),
-    color:AV_COLORS[Math.floor(Math.random()*AV_COLORS.length)],
-    time:'방금 전', lang:currentLang, ocr:ocr, tr:tr,
-    thumb:(imgSrc&&imgSrc.length>100)?imgSrc:null, isMine:true
-  };
-  runtimeHist.unshift(entry);
-  renderHist();
+  // 번역 시 이미 자동 저장되므로 안내만
   showT('히스토리에 저장되었습니다 🔖');
+  await loadHist();
+}
+
+/* ── 히스토리 불러오기 (DB) ── */
+async function loadHist(){
+  try{
+    const res=await fetch('/history');
+    const data=await res.json();
+    renderHist(data);
+  }catch(e){
+    renderHist([]);
+  }
 }
 
 /* ── 히스토리 렌더링 ── */
-function renderHist(){
-  const all=[...runtimeHist,...SAMPLE_HIST];
-  // 메인 페이지 그리드
-  document.getElementById('histGrid').innerHTML=all.map(h=>`
+function renderHist(items){
+  const all=items||[];
+  const grid=document.getElementById('histGrid');
+  if(!all.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text4);font-size:13px;padding:32px 0;">아직 번역 기록이 없어요. 첫 번역을 해보세요! 📜</div>';
+    document.getElementById('histModalList').innerHTML='';
+    return;
+  }
+  grid.innerHTML=all.map(h=>`
     <div class="hc">
       <div class="hc-top">
-        <div class="hc-av" style="background:${h.color}">${h.av}</div>
+        <div class="hc-av" style="background:${AV_COLORS[h.user.charCodeAt(0)%AV_COLORS.length]}">${h.user.charAt(0).toUpperCase()}</div>
         <span class="hc-name">${h.user}</span>
         <span class="hc-time">${h.time}</span>
       </div>
-      <div class="hc-thumb">${h.thumb?`<img src="${h.thumb}" alt="">`:' 📜'}</div>
+      <div class="hc-thumb">📜</div>
       <div class="hc-ocr">${h.ocr}</div>
       <div class="hc-tr">${h.tr}</div>
       <div class="hc-tags">
-        <span class="hc-tag">${LANG_FLAG[h.lang]} ${LANG_NAME[h.lang]}</span>
-        ${h.isMine?'<span class="hc-mine">✎ 내 번역</span>':''}
+        <span class="hc-tag">${LANG_FLAG[h.lang]||''} ${LANG_NAME[h.lang]||h.lang}</span>
+        ${loggedIn&&h.user===currentUser?'<span class="hc-mine">✎ 내 번역</span>':''}
       </div>
     </div>`).join('');
-  // 모달 목록
   document.getElementById('histModalList').innerHTML=all.map(h=>`
     <div style="background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border);">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <div style="width:26px;height:26px;border-radius:50%;background:${h.color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">${h.av}</div>
+        <div style="width:26px;height:26px;border-radius:50%;background:${AV_COLORS[h.user.charCodeAt(0)%AV_COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">${h.user.charAt(0).toUpperCase()}</div>
         <span style="font-size:13px;font-weight:600;color:var(--text2);">${h.user}</span>
         <span style="font-size:10px;color:var(--text4);margin-left:auto;">${h.time}</span>
-        <span style="padding:2px 7px;border-radius:8px;background:var(--teal-pale);font-size:10px;color:var(--teal);">${LANG_FLAG[h.lang]} ${LANG_NAME[h.lang]}</span>
+        <span style="padding:2px 7px;border-radius:8px;background:var(--teal-pale);font-size:10px;color:var(--teal);">${LANG_FLAG[h.lang]||''} ${LANG_NAME[h.lang]||h.lang}</span>
       </div>
       <div style="font-family:'Noto Serif KR',serif;font-size:12px;color:var(--text3);line-height:1.8;margin-bottom:4px;">${h.ocr.substring(0,80)}…</div>
       <div style="font-size:12px;color:var(--teal);font-weight:500;">${h.tr.substring(0,70)}…</div>
     </div>`).join('');
 }
 
-function openHistPanel(){renderHist();document.getElementById('histBg').classList.add('on');}
+function openHistPanel(){loadHist();document.getElementById('histBg').classList.add('on');}
 
 /* ── 복사 ── */
 function cpy(id,isTA){
@@ -647,8 +660,8 @@ function setIn(name){
     </div>`;
 }
 
-// 초기 히스토리 렌더링
-renderHist();
+// 초기 히스토리 로딩
+loadHist();
 </script>
 
 <!-- MODAL -->
