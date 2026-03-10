@@ -44,6 +44,6 @@ def index():
 if __name__ == '__main__':
     print("=" * 50)
     print("  옛한글 번역기 서버 시작")
-    print("  http://localhost:5000 으로 접속하세요")
     print("=" * 50)
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
