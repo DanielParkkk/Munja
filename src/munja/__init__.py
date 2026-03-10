@@ -1,0 +1,1 @@
+"""Munja application package."""
