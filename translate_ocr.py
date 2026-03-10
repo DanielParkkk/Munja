@@ -19,7 +19,7 @@ You will receive:
 Tasks:
 - Correct obvious OCR mistakes by checking the image when possible.
 - Translate the old Korean into natural modern standard Korean.
-- Then translate the modern Korean into natural English.
+- Then translate that modern Korean into natural contemporary English, Japanese, and Simplified Chinese.
 - Preserve uncertainty honestly when the OCR is ambiguous.
 
 Return only valid JSON with this exact schema:
@@ -27,6 +27,8 @@ Return only valid JSON with this exact schema:
   "ancient_text_corrected": "string",
   "modern_korean": "string",
   "english_translation": "string",
+  "japanese_translation": "string",
+  "chinese_translation": "string",
   "notes": "short string with ambiguity notes, or empty string"
 }
 """
@@ -88,7 +90,8 @@ def translate_with_gpt(
 
     user_prompt = (
         "Use the OCR transcription as the primary clue, and the image as visual evidence.\n"
-        "Translate in two steps: old Korean -> modern Korean -> English.\n"
+        "Translate in two steps: old Korean -> modern Korean -> English/Japanese/Simplified Chinese.\n"
+        "All non-Korean translations must be based on the modern Korean rendering, not directly on the historical text.\n"
         "Return JSON only.\n\n"
         f"OCR transcription:\n{ancient_text}"
     )
@@ -126,6 +129,8 @@ def translate_with_gpt(
     result.setdefault("ancient_text_corrected", ancient_text)
     result.setdefault("modern_korean", "")
     result.setdefault("english_translation", "")
+    result.setdefault("japanese_translation", "")
+    result.setdefault("chinese_translation", "")
     result.setdefault("notes", "")
     return result
 
@@ -146,6 +151,8 @@ def build_output_payload(image_path: Path, ancient_text: str, translation: Dict[
         "ancient_text_corrected": translation.get("ancient_text_corrected", ancient_text),
         "modern_korean": translation.get("modern_korean", ""),
         "english_translation": translation.get("english_translation", ""),
+        "japanese_translation": translation.get("japanese_translation", ""),
+        "chinese_translation": translation.get("chinese_translation", ""),
         "notes": translation.get("notes", ""),
     }
 
@@ -178,7 +185,7 @@ def translate_image(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run old-Hangul OCR and translate it to modern Korean and English with GPT."
+        description="Run old-Hangul OCR and translate it to modern Korean, English, Japanese, and Simplified Chinese with GPT."
     )
     parser.add_argument("--image", required=True, help="Path to the source image")
     parser.add_argument(

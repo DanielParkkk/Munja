@@ -8,4 +8,8 @@ result = translate_image(
       ocr_text= ancien_text
   )
 
-print(result)
+print('엣한글 원문 :',  result['ancient_text_raw'])
+print('현대어 번역 :',  result['modern_korean'])
+print('영어 번역 :',  result['english_translation'])
+print('일본어 번역 :', result['japanese_translation'])
+print('중국어 번역 :', result['chinese_translation'])
