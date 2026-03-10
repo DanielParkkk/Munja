@@ -197,10 +197,47 @@ textarea.inp::placeholder{color:var(--text4);font-family:'Noto Sans KR',sans-ser
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.lang-tab{padding:5px 12px;border-radius:16px;border:1px solid var(--border2);background:transparent;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;transition:all 0.18s;}
+.lang-tab.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+.lang-tab:hover:not(.active){border-color:var(--teal);color:var(--teal);}
+
+/* HISTORY */
+.hist-section{max-width:920px;margin:0 auto;padding:0 20px 48px;}
+.hist-hd{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px;}
+.hist-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);}
+.hist-sub{font-size:12px;color:var(--text3);margin-top:3px;}
+.hist-public-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:14px;background:var(--teal-pale);border:1px solid var(--teal-light);font-size:11px;color:var(--teal);font-weight:600;}
+.hist-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.hc{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;transition:all 0.2s;}
+.hc:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:var(--border2);}
+.hc-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.hc-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.hc-name{font-size:12px;font-weight:600;color:var(--text2);}
+.hc-time{font-size:10px;color:var(--text4);margin-left:auto;}
+.hc-thumb{width:100%;height:56px;border-radius:7px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:20px;opacity:0.3;}
+.hc-thumb img{width:100%;height:100%;object-fit:cover;opacity:1;}
+.hc-ocr{font-size:11px;color:var(--text3);line-height:1.7;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.hc-tr{font-size:11px;color:var(--teal);margin-top:4px;font-weight:500;overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;}
+.hc-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;}
+.hc-tag{padding:2px 7px;border-radius:8px;background:var(--teal-pale);border:1px solid var(--teal-light);font-size:10px;color:var(--teal);}
+.hc-mine{padding:2px 7px;border-radius:8px;background:#fff3e0;border:1px solid #ffe0b2;font-size:10px;color:#e65100;}
+
 @media(max-width:680px){
-  .grid2{grid-template-columns:1fr}.div1{display:none}
-  .ig{grid-template-columns:1fr}.dz{border-right:none;border-bottom:1px solid var(--border)}
-  .feats{grid-template-columns:1fr}
+  nav{padding:0 16px;}
+  .brand-en{display:none;}
+  .btn-pill{padding:6px 11px;font-size:11px;}
+  .hero{padding:32px 16px 24px;}
+  .main{padding:0 12px 32px;}
+  .ig{grid-template-columns:1fr;}
+  .dz{border-right:none;border-bottom:1px solid var(--border);min-height:200px;}
+  .ia{flex-direction:column;align-items:flex-start;gap:10px;}
+  .ia > div:last-child{width:100%;justify-content:flex-end;}
+  .lang-tab{font-size:11px;padding:4px 9px;}
+  .feats{grid-template-columns:1fr;padding:0 12px 40px;}
+  .hist-section{padding:0 12px 40px;}
+  .hist-grid{grid-template-columns:1fr;}
+  .hist-hd{flex-direction:column;align-items:flex-start;gap:8px;}
+  .modal{width:calc(100vw - 32px);padding:28px 20px;}
 }
 </style>
 </head>
@@ -215,7 +252,7 @@ textarea.inp::placeholder{color:var(--text4);font-family:'Noto Sans KR',sans-ser
     </div>
   </a>
   <div class="nav-r" id="navR">
-    <button class="btn-pill ghost" onclick="openModal('login')">히스토리</button>
+    <button class="btn-pill ghost" onclick="openHistPanel()">📋 히스토리</button>
     <button class="btn-pill solid" onclick="openModal('login')">로그인</button>
   </div>
 </nav>
@@ -264,9 +301,14 @@ textarea.inp::placeholder{color:var(--text4);font-family:'Noto Sans KR',sans-ser
         </div>
       </div>
       <div class="ia">
-        <div style="display:flex;align-items:center;gap:9px;">
-          <span style="font-size:12px;color:var(--text3);font-weight:500;">스타일</span>
-          <select class="ss"><option>자연스러운 번역</option><option>직역 중심</option><option>학술 번역</option></select>
+        <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">
+          <span style="font-size:12px;color:var(--text3);font-weight:500;">번역 언어</span>
+          <div style="display:flex;gap:4px;" id="langTabs">
+            <button class="lang-tab active" data-lang="ko" onclick="selLang(this)">🇰🇷 한국어</button>
+            <button class="lang-tab" data-lang="en" onclick="selLang(this)">🇺🇸 영어</button>
+            <button class="lang-tab" data-lang="ja" onclick="selLang(this)">🇯🇵 일본어</button>
+            <button class="lang-tab" data-lang="zh" onclick="selLang(this)">🇨🇳 중국어</button>
+          </div>
           <span style="font-size:11px;color:var(--text4);" id="fn"></span>
         </div>
         <div style="display:flex;gap:7px;">
@@ -275,7 +317,16 @@ textarea.inp::placeholder{color:var(--text4);font-family:'Noto Sans KR',sans-ser
         </div>
       </div>
       <div class="trout" id="trout">
-        <div class="trout-hd"><span class="trout-lbl">현대어 번역</span><div style="display:flex;gap:6px;"><button class="ic" onclick="cpy('itxt')" title="복사">📋</button></div></div>
+        <div class="trout-hd">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="trout-lbl">번역 결과</span>
+            <span id="troutLangBadge" style="font-size:11px;color:var(--teal);font-weight:600;background:var(--teal-pale);padding:2px 9px;border-radius:10px;">한국어</span>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="ic" onclick="cpy('itxt')" title="복사">📋</button>
+            <button class="ic" onclick="saveHist()" title="히스토리 저장">🔖</button>
+          </div>
+        </div>
         <div class="trout-b">
           <div id="itl" style="display:none;" class="lw">
             <div><div class="pr"><span id="itlbl">번역 중…</span><span id="itpct">0%</span></div><div class="pt"><div class="pf2" id="itfill" style="width:0%"></div></div></div>
@@ -291,57 +342,89 @@ textarea.inp::placeholder{color:var(--text4);font-family:'Noto Sans KR',sans-ser
 
 <div class="feats">
   <div class="fc"><div class="fci teal">📜</div><div class="fct">훈민정음</div><div class="fcd">1443년 세종대왕이 창제한 문자 체계를 기반으로 번역합니다.</div></div>
-  <div class="fc"><div class="fci warm">🌏</div><div class="fct">다국어 지원</div><div class="fcd">영어, 중국어, 일본어 등 10개 언어에서 옛한글로 번역합니다.</div></div>
-  <div class="fc"><div class="fci blue">🔖</div><div class="fct">번역 히스토리</div><div class="fcd">로그인 후 번역 기록을 저장하고 언제든 다시 확인하세요.</div></div>
+  <div class="fc"><div class="fci warm">🌏</div><div class="fct">다국어 지원</div><div class="fcd">현대 한국어, 영어, 일본어, 중국어로 번역합니다.</div></div>
+  <div class="fc"><div class="fci blue">🔖</div><div class="fct">공개 히스토리</div><div class="fcd">로그인 없이도 다른 사용자의 번역 사례를 보고 감을 잡을 수 있어요.</div></div>
+</div>
+
+<!-- 히스토리 섹션 -->
+<div class="hist-section">
+  <div class="hist-hd">
+    <div>
+      <div class="hist-title">번역 히스토리</div>
+      <div class="hist-sub">다른 사람들이 어떤 고문서를 번역했는지 참고해보세요 — 로그인 없이도 볼 수 있어요</div>
+    </div>
+    <span class="hist-public-badge">🌐 누구나 열람 가능</span>
+  </div>
+  <div class="hist-grid" id="histGrid"></div>
+</div>
+
+<!-- 히스토리 모달 (nav 버튼 클릭 시) -->
+<div class="modal-bg" id="histBg" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="modal" style="width:500px;max-height:82vh;overflow-y:auto;padding:28px 28px;">
+    <button class="modal-close" onclick="document.getElementById('histBg').classList.remove('on')">✕</button>
+    <div class="modal-title" style="margin-bottom:4px;">번역 히스토리</div>
+    <div class="modal-sub">모든 사용자의 번역 기록입니다.</div>
+    <div id="histModalList" style="display:flex;flex-direction:column;gap:10px;margin-top:8px;"></div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 const MOCK_OCR=`지효로 홀시 집이 가난ᄒᆞ야 ᄂᆞ믈으 음식을 먹으며\n어버이를위 ᄒᆞ야 빅니 밧긔 뵐을져 오더니\n이죽은후의 남으로초나 희놀시조촌술위일\n빅이오 만죠곡식을빠 ᄒᆞ며 자리를겹으로 안즈`;
-const MOCK_TR={yh:`나랏말ᄊᆞ미 듕귁에 달아\n문ᄍᆞ와로 서르 ᄉᆞᄆᆞᆺ디 아니ᄒᆞᆯᄊᆞ\n이런 젼ᄎᆞ로 어린 百姓이\n니르고져 ᄒᆞᆯ배 이셔도`,ko:`효성으로 집이 가난하여 나물로 음식을 먹으며,\n어버이를 위하여 베를 짜니 밖에 나가 뵐 수가 없었더니,\n어버이가 돌아가신 후에도 일용할 것을 부족하지 않게 하며,\n자리를 겹으로 깔고 앉아.`,en:`Though the house was poor in filial devotion, eating only greens,\nWeaving cloth for the parents' sake, unable to visit outside,\nAfter the parents passed, preparing daily provisions like others,\nSitting upon doubled mats.`,ja:`孝心ゆえに家は貧しく、野菜だけで食を凌ぎ、\n親のために布を織り、外に出られなかった。\n親が逝かれた後も日用の備えをし、重ね敷きの席に座した。`,zh:`以孝为本，家境贫寒，以野菜为食，\n为父母织布，无暇外出拜见。\n父母辞世后备好日用草蔬，席地而坐。`};
-const FLAGS={ko:'🇰🇷',en:'🇺🇸',ja:'🇯🇵',zh:'🇨🇳',yh:'📜'};
-const OCRS=[[20,'이미지 전처리 중…'],[48,'옛한글 자모 인식 중…'],[75,'문자 배열 분석 중…'],[94,'원문 정리 중…'],[100,'완료']];
+const MOCK_TR={
+  ko:`효성으로 집이 가난하여 나물로 음식을 먹으며,\n어버이를 위하여 베를 짜니 밖에 나가 뵐 수가 없었더니,\n어버이가 돌아가신 후에도 일용할 것을 부족하지 않게 하며,\n자리를 겹으로 깔고 앉아.`,
+  en:`Though the house was poor in filial devotion, eating only greens,\nWeaving cloth for the parents' sake, unable to visit outside,\nAfter the parents passed, preparing daily provisions,\nSitting upon doubled mats.`,
+  ja:`孝心ゆえに家は貧しく、野菜だけで食を凌ぎ、\n親のために布を織り、外に出られなかった。\n親が逝かれた後も日用の備えをし、重ね敷きの席に座した。`,
+  zh:`以孝为本，家境贫寒，以野菜为食，\n为父母织布，无暇外出拜见。\n父母辞世后备好日用草蔬，席地而坐。`
+};
+const LANG_NAME={ko:'현대 한국어',en:'영어',ja:'일본어',zh:'중국어'};
+const LANG_FLAG={ko:'🇰🇷',en:'🇺🇸',ja:'🇯🇵',zh:'🇨🇳'};
+const AV_COLORS=['#e74c3c','#3498db','#2ecc71','#9b59b6','#f39c12','#1abc9c','#e67e22','#16a085'];
 const TRS=[[25,'의미 파악 중…'],[58,'번역문 생성 중…'],[90,'다듬는 중…'],[100,'완료']];
 
-function sw(m){
-  document.getElementById('stb').classList.toggle('active',m==='text');
-  document.getElementById('sib').classList.toggle('active',m==='image');
-  document.getElementById('tm').classList.toggle('on',m==='text');
-  document.getElementById('im').classList.toggle('on',m==='image');
+// 샘플 공개 히스토리
+const SAMPLE_HIST=[
+  {user:'김민준',av:'김',color:AV_COLORS[0],time:'5분 전',lang:'ko',
+   ocr:'나랏말ᄊᆞ미 듕귁에 달아 문ᄍᆞ와로 서르 ᄉᆞᄆᆞᆺ디 아니ᄒᆞᆯᄊᆞ',
+   tr:'우리나라 말이 중국과 달라 문자로 서로 통하지 아니하므로',thumb:null},
+  {user:'이서연',av:'이',color:AV_COLORS[1],time:'18분 전',lang:'en',
+   ocr:'ᄒᆞ늘히 됴흔 우리 동방의 어딘 사ᄅᆞᆷ들아',
+   tr:'O good people of our eastern land, blessed by heaven',thumb:null},
+  {user:'박도윤',av:'박',color:AV_COLORS[2],time:'41분 전',lang:'ja',
+   ocr:'셰종대왕이 나라ᄒᆞ샤 훈민졍ᅙᅳᆷ을 지으시니',
+   tr:'世宗大王が国を治め、訓民正音をお作りになり',thumb:null},
+  {user:'최지아',av:'최',color:AV_COLORS[3],time:'1시간 전',lang:'ko',
+   ocr:'어린 百姓이 니르고져 ᄒᆞᆯ배 이셔도 ᄆᆞᄎᆞᆷ내 제 ᄠᅳ들',
+   tr:'어리석은 백성이 이르고자 하는 바가 있어도 끝내 제 뜻을',thumb:null},
+  {user:'정하은',av:'정',color:AV_COLORS[4],time:'2시간 전',lang:'zh',
+   ocr:'供養父母ᄒᆞ며 孝道ᄒᆞᄂᆞ니라',
+   tr:'供养父母，尽孝道也。',thumb:null},
+  {user:'강시우',av:'강',color:AV_COLORS[5],time:'3시간 전',lang:'en',
+   ocr:'지효로 홀시 집이 가난ᄒᆞ야 ᄂᆞ믈으 음식을 먹으며',
+   tr:'Being filial, though the house was poor, eating only vegetables',thumb:null},
+];
+let runtimeHist=[];
+let currentLang='ko';
+let currentFile=null;
+let loggedIn=false;
+let currentUser='';
+
+/* ── 언어 탭 ── */
+function selLang(el){
+  document.querySelectorAll('.lang-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  currentLang=el.dataset.lang;
 }
-function uf(){
-  document.getElementById('sf').textContent=FLAGS[document.getElementById('sl').value]||'🌐';
-  document.getElementById('tf').textContent=FLAGS[document.getElementById('tl').value]||'🌐';
-}
-function swapl(){
-  const s=document.getElementById('sl'),t=document.getElementById('tl');
-  const sv=s.value,tv=t.value;
-  [...s.options].forEach(o=>{if(o.value===tv)o.selected=true;});
-  [...t.options].forEach(o=>{if(o.value===sv)o.selected=true;});
-  uf();
-}
-function oi(){const v=document.getElementById('src').value;document.getElementById('cn').textContent=v.length;document.getElementById('gb').disabled=!v.trim();}
-function ok(e){if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();doT();}}
-function doT(){
-  const v=document.getElementById('src').value.trim();if(!v)return;
-  const lang=document.getElementById('tl').value;
-  document.getElementById('oe').style.display='none';document.getElementById('otxt').style.display='none';
-  document.getElementById('ol').style.display='block';document.getElementById('cpb').style.display='none';document.getElementById('gb').disabled=true;
-  rp('ofill','olbl','opct',TRS,()=>{
-    document.getElementById('ol').style.display='none';
-    document.getElementById('otxt').textContent=MOCK_TR[lang]||MOCK_TR.ko;document.getElementById('otxt').style.display='block';
-    document.getElementById('cpb').style.display='flex';document.getElementById('gb').disabled=false;
-  });
-}
+
+/* ── 드래그앤드롭 ── */
 function dov(e){e.preventDefault();document.getElementById('dz').classList.add('drag');}
 function dlv(){document.getElementById('dz').classList.remove('drag');}
 function ddr(e){e.preventDefault();dlv();const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))lf(f);}
 function ofc(e){const f=e.target.files[0];if(f)lf(f);e.target.value='';}
-let currentFile = null; // 업로드된 파일 보관
 
 function lf(f){
-  currentFile = f; // 파일 저장
+  currentFile=f;
   const r=new FileReader();
   r.onload=ev=>{
     const img=document.getElementById('pi');img.src=ev.target.result;
@@ -353,7 +436,7 @@ function lf(f){
   };r.readAsDataURL(f);
 }
 function rmi(){
-  currentFile = null;
+  currentFile=null;
   document.getElementById('pi').src='';document.getElementById('din').style.display='flex';document.getElementById('pvw').classList.remove('on');
   document.getElementById('dz').classList.remove('hi');document.getElementById('fi').style.pointerEvents='auto';
   document.getElementById('fn').textContent='';document.getElementById('ob').disabled=true;resetO();
@@ -366,91 +449,67 @@ function resetO(){
 }
 function oce(){document.getElementById('itb').disabled=!document.getElementById('ota').value.trim();}
 
+/* ── OCR ── */
 async function doOcr(){
-  if(!currentFile){ showT('이미지를 먼저 업로드해주세요'); return; }
-
-  // UI — 로딩 시작
+  if(!currentFile){showT('이미지를 먼저 업로드해주세요');return;}
   document.getElementById('oe2').style.display='none';
   document.getElementById('oload').style.display='block';
   document.getElementById('ota').classList.remove('on');
   document.getElementById('ob').disabled=true;
-
-  // 프로그레스바 애니메이션 (서버 응답 대기 중 표시용)
-  let progTimer = animateProg('oofill','oolbl','oopct');
-
-  try {
-    // Flask 서버로 이미지 전송
-    const formData = new FormData();
-    formData.append('image', currentFile);
-
-    const res = await fetch('http://localhost:5000/ocr', {
-      method: 'POST',
-      body: formData
-    });
-
-    const data = await res.json();
+  let progTimer=animateProg('oofill','oolbl','oopct');
+  try{
+    const formData=new FormData();
+    formData.append('image',currentFile);
+    const res=await fetch('http://localhost:5000/ocr',{method:'POST',body:formData});
+    const data=await res.json();
     clearInterval(progTimer);
-
-    if (!res.ok || data.error) {
-      throw new Error(data.error || '서버 오류');
-    }
-
-    // UI — 결과 표시
+    if(!res.ok||data.error) throw new Error(data.error||'서버 오류');
     document.getElementById('oload').style.display='none';
-    document.getElementById('ota').value = data.text;
+    document.getElementById('ota').value=data.text;
     document.getElementById('ota').classList.add('on');
     document.getElementById('ocpb').style.display='flex';
-    document.getElementById('itb').disabled = false;
-    document.getElementById('ob').disabled = false;
-
-    // 프로그레스 100%
-    const fill = document.getElementById('oofill');
-    const lbl = document.getElementById('oolbl');
-    const pct = document.getElementById('oopct');
-    if(fill) fill.style.width='100%';
-    if(lbl) lbl.textContent='판독 완료';
-    if(pct) pct.textContent='100%';
-
-  } catch(err) {
+    document.getElementById('itb').disabled=false;
+    document.getElementById('ob').disabled=false;
+    const fill=document.getElementById('oofill');
+    if(fill)fill.style.width='100%';
+    document.getElementById('oolbl').textContent='판독 완료';
+    document.getElementById('oopct').textContent='100%';
+  }catch(err){
     clearInterval(progTimer);
     document.getElementById('oload').style.display='none';
     document.getElementById('oe2').style.display='flex';
     document.getElementById('ob').disabled=false;
-    showT('❌ 오류: ' + err.message);
-    console.error(err);
+    showT('❌ 오류: '+err.message);
   }
 }
-
-// 서버 대기 중 프로그레스바를 천천히 채워주는 애니메이션
-function animateProg(fi, li, pi){
-  let p = 0;
-  const labels = ['이미지 전송 중…','옛한글 자모 인식 중…','문자 배열 분석 중…','원문 정리 중…'];
-  let li_idx = 0;
-  const fill = document.getElementById(fi);
-  const lbl  = document.getElementById(li);
-  const pct  = document.getElementById(pi);
+function animateProg(fi,li,pi){
+  let p=0;const labels=['이미지 전송 중…','옛한글 자모 인식 중…','문자 배열 분석 중…','원문 정리 중…'];
+  let li_idx=0;
+  const fill=document.getElementById(fi),lbl=document.getElementById(li),pct=document.getElementById(pi);
   return setInterval(()=>{
-    if(p < 90) {
-      p += Math.random() * 4;
-      if(p > 90) p = 90;
-      if(fill) fill.style.width = p + '%';
-      if(pct)  pct.textContent  = Math.floor(p) + '%';
-      const idx = Math.floor(p / 25);
-      if(idx !== li_idx && idx < labels.length){
-        li_idx = idx;
-        if(lbl) lbl.textContent = labels[idx];
-      }
+    if(p<90){p+=Math.random()*4;if(p>90)p=90;
+      if(fill)fill.style.width=p+'%';if(pct)pct.textContent=Math.floor(p)+'%';
+      const idx=Math.floor(p/25);
+      if(idx!==li_idx&&idx<labels.length){li_idx=idx;if(lbl)lbl.textContent=labels[idx];}
     }
-  }, 300);
+  },300);
 }
+
+/* ── 번역 ── */
 function doITr(){
   if(!document.getElementById('ota').value.trim())return;
-  const lang=document.getElementById('tl').value;
-  document.getElementById('trout').classList.add('on');document.getElementById('itl').style.display='block';document.getElementById('itxt').style.display='none';
+  document.getElementById('trout').classList.add('on');
+  document.getElementById('itl').style.display='block';
+  document.getElementById('itxt').style.display='none';
   document.getElementById('itb').disabled=true;
+  // 번역 결과 헤더 언어 표시
+  const badge=document.getElementById('troutLangBadge');
+  if(badge) badge.textContent=LANG_FLAG[currentLang]+' '+LANG_NAME[currentLang];
   rp('itfill','itlbl','itpct',TRS,()=>{
-    document.getElementById('itl').style.display='none';document.getElementById('itxt').textContent=MOCK_TR[lang]||MOCK_TR.ko;
-    document.getElementById('itxt').style.display='block';document.getElementById('itb').disabled=false;
+    document.getElementById('itl').style.display='none';
+    document.getElementById('itxt').textContent=MOCK_TR[currentLang]||MOCK_TR.ko;
+    document.getElementById('itxt').style.display='block';
+    document.getElementById('itb').disabled=false;
   });
 }
 function rp(fi,li,pi,steps,done){
@@ -459,20 +518,71 @@ function rp(fi,li,pi,steps,done){
     if(f)f.style.width=p+'%';if(lb)lb.textContent=l;if(pc)pc.textContent=p+'%';
     setTimeout(next,i<steps.length?270+Math.random()*300:170);};next();
 }
+
+/* ── 히스토리 저장 ── */
+function saveHist(){
+  const ocr=document.getElementById('ota').value.trim();
+  const tr=document.getElementById('itxt').textContent.trim();
+  if(!ocr||!tr){showT('번역 결과가 없습니다');return;}
+  const imgSrc=document.getElementById('pi').src||null;
+  const name=loggedIn?currentUser:'익명';
+  const entry={
+    user:name, av:name.charAt(0).toUpperCase(),
+    color:AV_COLORS[Math.floor(Math.random()*AV_COLORS.length)],
+    time:'방금 전', lang:currentLang, ocr:ocr, tr:tr,
+    thumb:(imgSrc&&imgSrc.length>100)?imgSrc:null, isMine:true
+  };
+  runtimeHist.unshift(entry);
+  renderHist();
+  showT('히스토리에 저장되었습니다 🔖');
+}
+
+/* ── 히스토리 렌더링 ── */
+function renderHist(){
+  const all=[...runtimeHist,...SAMPLE_HIST];
+  // 메인 페이지 그리드
+  document.getElementById('histGrid').innerHTML=all.map(h=>`
+    <div class="hc">
+      <div class="hc-top">
+        <div class="hc-av" style="background:${h.color}">${h.av}</div>
+        <span class="hc-name">${h.user}</span>
+        <span class="hc-time">${h.time}</span>
+      </div>
+      <div class="hc-thumb">${h.thumb?`<img src="${h.thumb}" alt="">`:' 📜'}</div>
+      <div class="hc-ocr">${h.ocr}</div>
+      <div class="hc-tr">${h.tr}</div>
+      <div class="hc-tags">
+        <span class="hc-tag">${LANG_FLAG[h.lang]} ${LANG_NAME[h.lang]}</span>
+        ${h.isMine?'<span class="hc-mine">✎ 내 번역</span>':''}
+      </div>
+    </div>`).join('');
+  // 모달 목록
+  document.getElementById('histModalList').innerHTML=all.map(h=>`
+    <div style="background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="width:26px;height:26px;border-radius:50%;background:${h.color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">${h.av}</div>
+        <span style="font-size:13px;font-weight:600;color:var(--text2);">${h.user}</span>
+        <span style="font-size:10px;color:var(--text4);margin-left:auto;">${h.time}</span>
+        <span style="padding:2px 7px;border-radius:8px;background:var(--teal-pale);font-size:10px;color:var(--teal);">${LANG_FLAG[h.lang]} ${LANG_NAME[h.lang]}</span>
+      </div>
+      <div style="font-family:'Noto Serif KR',serif;font-size:12px;color:var(--text3);line-height:1.8;margin-bottom:4px;">${h.ocr.substring(0,80)}…</div>
+      <div style="font-size:12px;color:var(--teal);font-weight:500;">${h.tr.substring(0,70)}…</div>
+    </div>`).join('');
+}
+
+function openHistPanel(){renderHist();document.getElementById('histBg').classList.add('on');}
+
+/* ── 복사 ── */
 function cpy(id,isTA){
   const txt=isTA?document.getElementById(id).value:document.getElementById(id).textContent;
   navigator.clipboard.writeText(txt).then(()=>showT('복사 완료 ✓'));
 }
-function showT(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+function showT(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
-/* ── Login ── */
-let loggedIn=false;
+/* ── 로그인 ── */
 function openModal(v){
-  if(loggedIn){
-    switchV('logout');
-    const n=document.getElementById('navUnameEl');
-    document.getElementById('logoutSub').textContent=(n?n.textContent:'사용자')+'님으로 로그인 중입니다.';
-  } else { switchV(v||'login'); }
+  if(loggedIn){switchV('logout');document.getElementById('logoutSub').textContent=currentUser+'님으로 로그인 중입니다.';}
+  else switchV(v||'login');
   document.getElementById('modalBg').classList.add('on');
 }
 function closeModal(){document.getElementById('modalBg').classList.remove('on');}
@@ -500,14 +610,22 @@ function doSignup(){
 }
 function demoC(){setIn('데모 사용자');closeModal();showT('데모 계정으로 로그인되었습니다 🎭');}
 function doLogout(){
-  loggedIn=false;
-  document.getElementById('navR').innerHTML=`<button class="btn-pill ghost" onclick="openModal('login')">히스토리</button><button class="btn-pill solid" onclick="openModal('login')">로그인</button>`;
+  loggedIn=false;currentUser='';
+  document.getElementById('navR').innerHTML=`<button class="btn-pill ghost" onclick="openHistPanel()">📋 히스토리</button><button class="btn-pill solid" onclick="openModal('login')">로그인</button>`;
   closeModal();showT('로그아웃되었습니다');
 }
 function setIn(name){
-  loggedIn=true;
-  document.getElementById('navR').innerHTML=`<div class="nav-user" onclick="openModal('logout')"><div class="nav-avatar">${name.charAt(0).toUpperCase()}</div><span class="nav-uname" id="navUnameEl">${name}</span></div>`;
+  loggedIn=true;currentUser=name;
+  document.getElementById('navR').innerHTML=`
+    <button class="btn-pill ghost" onclick="openHistPanel()">📋 히스토리</button>
+    <div class="nav-user" onclick="openModal('logout')">
+      <div class="nav-avatar">${name.charAt(0).toUpperCase()}</div>
+      <span class="nav-uname" id="navUnameEl">${name}</span>
+    </div>`;
 }
+
+// 초기 히스토리 렌더링
+renderHist();
 </script>
 
 <!-- MODAL -->
