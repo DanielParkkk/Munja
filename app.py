@@ -63,39 +63,51 @@ def ocr():
 # ── 번역 엔드포인트 ──────────────────────────────
 @app.route('/translate', methods=['POST'])
 def translate():
-    data = request.json
-    text = data.get('text', '').strip()
-    target_lang = data.get('lang', 'ko')
+    if 'image' not in request.files:
+        return jsonify({'error': '이미지가 없습니다.'}), 400
 
-    if not text:
+    file = request.files['image']
+    ocr_text = request.form.get('text', '').strip()
+    target_lang = request.form.get('lang', 'ko')
+
+    if not ocr_text:
         return jsonify({'error': '번역할 텍스트가 없습니다.'}), 400
 
-    lang_map = {
-        'ko': '현대 한국어',
-        'en': 'English',
-        'ja': '日本語',
-        'zh': '中文'
-    }
+    suffix = os.path.splitext(file.filename)[-1] or '.png'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        file.save(tmp.name)
+        tmp_path = tmp.name
 
     try:
-        from openai import OpenAI
-        client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
-
-        response = client.chat.completions.create(
-            model='gpt-4o-mini',
-            messages=[
-                {'role': 'system', 'content': f'당신은 옛한글 전문 번역가입니다. 입력된 옛한글 원문을 {lang_map.get(target_lang, "현대 한국어")}로 자연스럽게 번역해주세요. 번역문만 출력하세요.'},
-                {'role': 'user', 'content': text}
-            ],
-            max_tokens=2048
+        from translate_ocr import translate_image
+        result = translate_image(
+            image_path=tmp_path,
+            ocr_text=ocr_text,
+            api_key=os.environ.get('OPENAI_API_KEY'),
         )
 
-        result = response.choices[0].message.content
-        return jsonify({'text': result})
+        # 언어 선택에 따라 결과 반환
+        lang_map = {
+            'ko': result.get('modern_korean', ''),
+            'en': result.get('english_translation', ''),
+            'ja': result.get('modern_korean', ''),  # ja/zh는 modern_korean 기반으로 추가 번역 가능
+            'zh': result.get('modern_korean', ''),
+        }
+
+        return jsonify({
+            'text': lang_map.get(target_lang, result.get('modern_korean', '')),
+            'ancient_text_corrected': result.get('ancient_text_corrected', ocr_text),
+            'modern_korean': result.get('modern_korean', ''),
+            'english_translation': result.get('english_translation', ''),
+            'notes': result.get('notes', ''),
+        })
 
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
 # ── 프론트엔드 서빙 ──────────────────────────────
