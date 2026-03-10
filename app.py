@@ -142,7 +142,7 @@ def translate():
             lang_name = '日本語' if target_lang == 'ja' else '中文'
             base_text = result.get('modern_korean', '')
             resp = client.chat.completions.create(
-                model='gpt-4.5-preview',
+                model='gpt-5.2',
                 messages=[
                     {'role': 'system', 'content': f'Translate the following modern Korean text into natural {lang_name}. Output only the translation.'},
                     {'role': 'user', 'content': base_text}
