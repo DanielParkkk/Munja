@@ -191,7 +191,7 @@ def history():
             SELECT id, username, ocr_text, translated_text, lang, image_data, created_at
             FROM translations
             ORDER BY created_at DESC
-            LIMIT 50
+            LIMIT 6
         ''')
         rows = cur.fetchall()
         cur.close()
