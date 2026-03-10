@@ -147,7 +147,7 @@ def translate():
                     {'role': 'system', 'content': f'Translate the following modern Korean text into natural {lang_name}. Output only the translation.'},
                     {'role': 'user', 'content': base_text}
                 ],
-                max_tokens=1024
+                max_completion_tokens=1024
             )
             translated_text = resp.choices[0].message.content.strip()
 
