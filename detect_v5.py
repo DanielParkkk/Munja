@@ -155,6 +155,53 @@ def load_models(device_name=""):
 
 
 @torch.no_grad()
+def extract_ancient_text_with_models(image_path, models):
+    detector, classifier_model, t_data, transform, device, cls_device, imgsz, stride, pt = models
+
+    image_path = Path(image_path)
+    if not image_path.exists():
+        raise FileNotFoundError(f"이미지 파일을 찾을 수 없습니다: {image_path}")
+
+    dataset = LoadImages(str(image_path), img_size=imgsz, stride=stride, auto=pt)
+    detector.warmup(imgsz=(1, 3, *imgsz))
+
+    ancient_text = ""
+
+    for path, im, im0s, vid_cap, s, origin_img, x_pad, y_pad in dataset:
+        im = torch.from_numpy(im).to(device)
+        im = im.half() if detector.fp16 else im.float()
+        im /= 255
+        if len(im.shape) == 3:
+            im = im[None]
+
+        pred = detector(im, augment=False, visualize=False)
+        pred = non_max_suppression(pred, 0.25, 0.25, None, False, max_det=1000)
+
+        for det in pred:
+            if not len(det):
+                ancient_text = ""
+                continue
+
+            det[:, :4] = scale_coords(im.shape[2:], det[:, :4], im0s.shape).round()
+            pred_bbox_list = iou_cal.tensor_to_list(det)
+
+            ocrdataset = classifier.mnistsimple_Dataset(
+                im0s, pred_bbox_list, [], transforms=transform,
+            )
+            ocrloader = torch.utils.data.DataLoader(
+                ocrdataset, batch_size=1, shuffle=False,
+            )
+
+            pred_class_list = classifier.get_predictions(
+                classifier_model, device, ocrloader, [],
+            )
+
+            ancient_text = build_ancient_text(pred_bbox_list, pred_class_list, t_data)
+
+    return ancient_text
+
+
+@torch.no_grad()
 def extract_ancient_text(image_path):
     image_path = Path(image_path)
     if not image_path.exists():

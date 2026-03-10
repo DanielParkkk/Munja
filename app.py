@@ -67,6 +67,16 @@ download_model('1XK8-NGDEHxvopSaxElXvdYI1CXtgZgN3', 'weights_classifier.pth')
 print("✅ 모델 준비 완료!")
 init_db()
 
+# OCR 모델 미리 로딩 (요청마다 로딩 방지)
+print("🔄 OCR 모델 로딩 중...")
+from detect_v5 import load_models, extract_ancient_text as _extract
+_ocr_models = load_models()
+print("✅ OCR 모델 로딩 완료!")
+
+def run_ocr(image_path):
+    from detect_v5 import extract_ancient_text_with_models
+    return extract_ancient_text_with_models(image_path, _ocr_models)
+
 # ── OCR 엔드포인트 ──────────────────────────────
 @app.route('/ocr', methods=['POST'])
 def ocr():
@@ -83,8 +93,7 @@ def ocr():
         tmp_path = tmp.name
 
     try:
-        from detect_v5 import extract_ancient_text
-        result = extract_ancient_text(tmp_path)
+        result = run_ocr(tmp_path)
         return jsonify({'text': result})
     except Exception as e:
         traceback.print_exc()
