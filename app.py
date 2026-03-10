@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 import os
 import tempfile
 import traceback
-import urllib.request
 
 load_dotenv()
 
@@ -15,12 +14,16 @@ CORS(app)
 def download_model(file_id, dest_path):
     if os.path.exists(dest_path):
         size = os.path.getsize(dest_path)
-        if size > 1024 * 1024:  # 1MB 이상이면 정상 파일
+        if size > 10 * 1024 * 1024:  # 10MB 이상이면 정상 파일
             print(f"✅ 모델 이미 존재: {dest_path} ({size//1024//1024}MB)")
             return
+        else:
+            print(f"⚠️ 파일이 너무 작음({size}bytes), 재다운로드...")
+            os.remove(dest_path)
+
     print(f"📥 모델 다운로드 중: {dest_path}")
-    url = f"https://drive.google.com/uc?export=download&id={file_id}&confirm=t"
-    urllib.request.urlretrieve(url, dest_path)
+    import gdown
+    gdown.download(id=file_id, output=dest_path, quiet=False, fuzzy=True)
     size = os.path.getsize(dest_path)
     print(f"✅ 다운로드 완료: {dest_path} ({size//1024//1024}MB)")
 

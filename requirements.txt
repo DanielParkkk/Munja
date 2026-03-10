@@ -3,6 +3,7 @@ flask
 flask-cors
 openai
 python-dotenv
+gdown
 
 # YOLOv5 base
 matplotlib>=3.2.2
