@@ -10,6 +10,7 @@ import math
 import os
 import random
 import shutil
+import sys
 import time
 from itertools import repeat
 from multiprocessing.pool import Pool, ThreadPool
@@ -31,7 +32,13 @@ from utils.general import (DATASETS_DIR, LOGGER, NUM_THREADS, check_dataset, che
                            cv2, segments2boxes, xyn2xy, xywh2xyxy, xywhn2xyxy, xyxy2xywhn)
 from utils.torch_utils import torch_distributed_zero_first
 
-import img_crop
+try:
+    import img_crop
+except ModuleNotFoundError:
+    project_src = Path(__file__).resolve().parents[3] / 'src'
+    if str(project_src) not in sys.path:
+        sys.path.append(str(project_src))
+    from munja.ocr import img_crop
 
 # Parameters
 HELP_URL = 'https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data'
