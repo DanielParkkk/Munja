@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 import requests
 
 
-DEFAULT_MODEL = "gpt-5-mini"
+DEFAULT_MODEL = "gpt-5.2"
 API_URL = "https://api.openai.com/v1/chat/completions"
 
 SYSTEM_PROMPT = """You are a translation assistant for historical Korean documents.
