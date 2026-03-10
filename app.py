@@ -4,11 +4,31 @@ from dotenv import load_dotenv
 import os
 import tempfile
 import traceback
+import urllib.request
 
 load_dotenv()
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
+
+# ── 모델 자동 다운로드 ──────────────────────────────
+def download_model(file_id, dest_path):
+    if os.path.exists(dest_path):
+        size = os.path.getsize(dest_path)
+        if size > 1024 * 1024:  # 1MB 이상이면 정상 파일
+            print(f"✅ 모델 이미 존재: {dest_path} ({size//1024//1024}MB)")
+            return
+    print(f"📥 모델 다운로드 중: {dest_path}")
+    url = f"https://drive.google.com/uc?export=download&id={file_id}&confirm=t"
+    urllib.request.urlretrieve(url, dest_path)
+    size = os.path.getsize(dest_path)
+    print(f"✅ 다운로드 완료: {dest_path} ({size//1024//1024}MB)")
+
+# 서버 시작 시 모델 다운로드
+print("🔄 모델 파일 확인 중...")
+download_model('1LhQ6AKWzhhG-w880Fs_G2HJagtXvQ-YK', 'weights_detector.pt')
+download_model('1XK8-NGDEHxvopSaxElXvdYI1CXtgZgN3', 'weights_classifier.pth')
+print("✅ 모델 준비 완료!")
 
 # ── OCR 엔드포인트 ──────────────────────────────
 @app.route('/ocr', methods=['POST'])
