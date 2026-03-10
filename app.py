@@ -28,8 +28,13 @@ def init_db():
                 ocr_text TEXT NOT NULL,
                 translated_text TEXT NOT NULL,
                 lang TEXT NOT NULL DEFAULT 'ko',
+                image_data TEXT,
                 created_at TIMESTAMP DEFAULT NOW()
             )
+        ''')
+        # 기존 테이블에 image_data 컬럼 없으면 추가
+        cur.execute('''
+            ALTER TABLE translations ADD COLUMN IF NOT EXISTS image_data TEXT
         ''')
         conn.commit()
         cur.close()
@@ -108,6 +113,14 @@ def translate():
         file.save(tmp.name)
         tmp_path = tmp.name
 
+    # 이미지 base64 변환
+    import base64
+    with open(tmp_path, 'rb') as f:
+        img_bytes = f.read()
+    img_data = base64.b64encode(img_bytes).decode('utf-8')
+    mime = 'image/png' if suffix.lower() == '.png' else 'image/jpeg'
+    image_data_url = f"data:{mime};base64,{img_data}"
+
     try:
         from translate_ocr import translate_image
         result = translate_image(
@@ -119,18 +132,32 @@ def translate():
         lang_map = {
             'ko': result.get('modern_korean', ''),
             'en': result.get('english_translation', ''),
-            'ja': result.get('modern_korean', ''),
-            'zh': result.get('modern_korean', ''),
         }
-        translated_text = lang_map.get(target_lang, result.get('modern_korean', ''))
+        translated_text = lang_map.get(target_lang, '')
+
+        # 일본어/중국어는 추가 번역
+        if target_lang in ('ja', 'zh'):
+            from openai import OpenAI
+            client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+            lang_name = '日本語' if target_lang == 'ja' else '中文'
+            base_text = result.get('modern_korean', '')
+            resp = client.chat.completions.create(
+                model='gpt-4.5-preview',
+                messages=[
+                    {'role': 'system', 'content': f'Translate the following modern Korean text into natural {lang_name}. Output only the translation.'},
+                    {'role': 'user', 'content': base_text}
+                ],
+                max_tokens=1024
+            )
+            translated_text = resp.choices[0].message.content.strip()
 
         # DB에 저장
         try:
             conn = get_db()
             cur = conn.cursor()
             cur.execute(
-                'INSERT INTO translations (username, ocr_text, translated_text, lang) VALUES (%s, %s, %s, %s)',
-                (username, ocr_text[:500], translated_text[:1000], target_lang)
+                'INSERT INTO translations (username, ocr_text, translated_text, lang, image_data) VALUES (%s, %s, %s, %s, %s)',
+                (username, ocr_text[:500], translated_text[:1000], target_lang, image_data_url)
             )
             conn.commit()
             cur.close()
@@ -161,7 +188,7 @@ def history():
         conn = get_db()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute('''
-            SELECT id, username, ocr_text, translated_text, lang, created_at
+            SELECT id, username, ocr_text, translated_text, lang, image_data, created_at
             FROM translations
             ORDER BY created_at DESC
             LIMIT 50
@@ -178,12 +205,53 @@ def history():
                 'ocr': row['ocr_text'],
                 'tr': row['translated_text'],
                 'lang': row['lang'],
+                'image': row['image_data'] or '',
                 'time': row['created_at'].strftime('%Y-%m-%d %H:%M'),
             })
         return jsonify(result)
     except Exception as e:
         traceback.print_exc()
         return jsonify([]), 500
+
+
+# ── 샘플 데이터 추가 ──────────────────────────────
+@app.route('/seed', methods=['POST'])
+def seed():
+    samples = [
+        {
+            'username': '김민준',
+            'ocr_text': '나랏말ᄊᆞ미 듕귁에 달아 문ᄍᆞ와로 서르 ᄉᆞᄆᆞᆺ디 아니ᄒᆞᆯᄊᆞ',
+            'translated_text': '우리나라 말이 중국과 달라 문자로 서로 통하지 아니하므로',
+            'lang': 'ko',
+        },
+        {
+            'username': '이서연',
+            'ocr_text': '지효로 홀시 집이 가난ᄒᆞ야 ᄂᆞ믈으 음식을 먹으며 어버이를 위ᄒᆞ야',
+            'translated_text': '지극한 효도로 집이 가난하여 나물 음식을 먹으며 어버이를 위하여',
+            'lang': 'ko',
+        },
+        {
+            'username': 'Daniel',
+            'ocr_text': '供養父母ᄒᆞ며 孝道ᄒᆞᄂᆞ니라',
+            'translated_text': 'Nourishing parents and practicing filial piety.',
+            'lang': 'en',
+        },
+    ]
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        for s in samples:
+            cur.execute(
+                'INSERT INTO translations (username, ocr_text, translated_text, lang) VALUES (%s, %s, %s, %s)',
+                (s['username'], s['ocr_text'], s['translated_text'], s['lang'])
+            )
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'message': '샘플 데이터 3개 추가 완료!'})
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 
 # ── 프론트엔드 서빙 ──────────────────────────────
