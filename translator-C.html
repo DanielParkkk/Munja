@@ -496,21 +496,45 @@ function animateProg(fi,li,pi){
 }
 
 /* ── 번역 ── */
-function doITr(){
+async function doITr(){
   if(!document.getElementById('ota').value.trim())return;
+  const text=document.getElementById('ota').value.trim();
   document.getElementById('trout').classList.add('on');
   document.getElementById('itl').style.display='block';
   document.getElementById('itxt').style.display='none';
   document.getElementById('itb').disabled=true;
-  // 번역 결과 헤더 언어 표시
   const badge=document.getElementById('troutLangBadge');
   if(badge) badge.textContent=LANG_FLAG[currentLang]+' '+LANG_NAME[currentLang];
-  rp('itfill','itlbl','itpct',TRS,()=>{
+
+  // 프로그레스바 애니메이션
+  let progTimer=animateProg('itfill','itlbl','itpct');
+
+  try{
+    const res=await fetch('/translate',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:text, lang:currentLang})
+    });
+    const data=await res.json();
+    clearInterval(progTimer);
+    if(!res.ok||data.error) throw new Error(data.error||'서버 오류');
+
     document.getElementById('itl').style.display='none';
-    document.getElementById('itxt').textContent=MOCK_TR[currentLang]||MOCK_TR.ko;
+    document.getElementById('itxt').textContent=data.text;
     document.getElementById('itxt').style.display='block';
     document.getElementById('itb').disabled=false;
-  });
+
+    const fill=document.getElementById('itfill');
+    if(fill)fill.style.width='100%';
+    document.getElementById('itlbl').textContent='번역 완료';
+    document.getElementById('itpct').textContent='100%';
+
+  }catch(err){
+    clearInterval(progTimer);
+    document.getElementById('itl').style.display='none';
+    document.getElementById('itb').disabled=false;
+    showT('❌ 오류: '+err.message);
+  }
 }
 function rp(fi,li,pi,steps,done){
   let i=0;const next=()=>{if(i>=steps.length){done();return;}const[p,l]=steps[i++];
